@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Server_Calc_UmCliente1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/ServerMultiCliente/dist/Server_Calc_UmCliente.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

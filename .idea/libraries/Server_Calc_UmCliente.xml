@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Server_Calc_UmCliente">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/ClienteEstatico/dist/lib/Server_Calc_UmCliente.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
