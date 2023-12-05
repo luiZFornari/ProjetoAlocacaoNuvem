@@ -157,18 +157,16 @@ public class Server {
         System.out.println(clientes.size());
         for (int i=0; i<=clientes.size() ;i++){
             if (clientes.get(i).getId().equals(cliente)){
-                System.out.println("entrou if");
                 clienteN = clientes.get(i) ;
-                System.out.println(clienteN.getId());
+                break;
             }
-            System.out.println("teste for");
+
         }
-        System.out.println("saiu for");
-        System.out.println(clienteN.getId());
-//        for (Alocacao u : clienteN != null ? clienteN.getAlocacoes() : null) {
-//            listaRecurso +="\n|ID" + u.getId() + " , Unidade" + u.getUnidade() + ", Poder" + u.getCapacidadeComputacional()+ "|";
-//
-//        }
+
+        for (Alocacao u : clienteN != null ? clienteN.getAlocacoes() : null) {
+            listaRecurso +="\n|ID:" + u.getId() + " , Unidade:" + u.getUnidade() + ", Poder:" + u.getCapacidadeComputacional()+ "|";
+
+       }
 
         return  listaRecurso;
     };
