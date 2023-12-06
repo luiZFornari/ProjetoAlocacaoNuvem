@@ -124,7 +124,7 @@ public class TrataConexao implements Runnable {
 
                                     Alocacao novaaloc = server.alocaRecurso(qtdRecurso, random.nextInt(100)+ id , cliente);
                                     reply.setStatus(Status.OK);
-                                    reply.setParam("msg",novaaloc);
+                                    reply.setParam("msg",novaaloc.getId());
 
                                 } catch (Exception e) {
                                     m.setStatus(Status.PARAMERROR);
@@ -132,7 +132,25 @@ public class TrataConexao implements Runnable {
                                 }
                                 break;
                             case "REMOVER":
+                                try {
+                                    Integer alocacao = (Integer) m.getParam("id") ;
+                                    Integer cliente = (Integer) m.getParam("cliente") ;
 
+                                    if (alocacao == null ) {
+                                        reply.setStatus(Status.PARAMERROR);
+                                        reply.setParam("msg", "Erro: parametros");
+                                        break;
+                                    }
+
+                                    Float valor = server.desalocaRecurso(alocacao,cliente);
+
+                                    reply.setStatus(Status.OK);
+                                    reply.setParam("msg","Custo : "  + valor);
+
+                                } catch (Exception e) {
+                                    m.setStatus(Status.PARAMERROR);
+                                    m.setParam("msg","Erro trycatch");
+                                }
                                 break;
                             case "LISTARALOCACAO":
                                 try {

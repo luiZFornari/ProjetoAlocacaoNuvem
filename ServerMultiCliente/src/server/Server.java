@@ -14,10 +14,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 import javax.lang.model.util.ElementScanner6;
@@ -28,27 +25,12 @@ import util.Estados;
 import util.Status;
 import util.Unidade;
 
-/**
- *
- * @author elder
- */
+
 public class Server {
-    /* 1 - Criar o servidor de conexões
-     2 -Esperar o um pedido de conexão;
-     Outro processo
-     2.1 e criar uma nova conexão;
-     3 - Criar streams sobre o  socket de comunicação entre servidor/cliente
-     4.2 - Fechar streams de entrada e saída
-     trada e saída;
-     4 - Tratar a conversação entre cliente e 
-     servidor (tratar protocolo);
-     4.1 - Fechar socket de comunicação entre servidor/cliente
-     4.2 - Fechar streams de entrada e saída
 
-     */
 
+    Random random = new Random();
     private ServerSocket serverSocket;
-
 
     private ArrayList<User> usuarios;
     
@@ -116,55 +98,83 @@ public class Server {
         Alocacao novaAloc = null;
         LocalDateTime currentTime = LocalDateTime.now();
 
+
         for (int i=0; i<=clientes.size() ;i++){
             if (clientes.get(i).getId().equals(cliente)){
                 clienteN = clientes.get(i) ;
                 novaAloc = new Alocacao(id,clienteN, null, currentTime, qtdRecurso);
                 clientes.get(i).addAlocacao(novaAloc);
+                //algoritmo pra alocar
+                firstfit(novaAloc);
+                listarAlocacoes();
                 return novaAloc;
             }
         }
 
-        return  novaAloc;
+        return  null;
     }
-    protected Float[] desalocaRecurso(Integer id){
+
+    private void listarAlocacoes(){
+        for (Alocacao u : alocacoes) {
+            System.out.println("\n|ID:" + u.getId() + " , Unidade:" + u.getUnidade().getId() + ", Poder:" + u.getCapacidadeComputacional()+ "|");
+        }
+    }
+    protected Float desalocaRecurso(Integer id, Integer cliente){
         Float valorLucro = null;
         Float valorGasto = null;
 
         LocalDateTime currentTime = LocalDateTime.now();
 
-        for (int i = 0; i < alocacoes.size(); i++) {
-            if(alocacoes.get(i).getId() ==  id){
-                Unidade unidadealoc = alocacoes.get(i).getUnidade();
+        // Utilize um iterador para percorrer a lista e remover elementos
+        Iterator<Alocacao> iterator = alocacoes.iterator();
+        while (iterator.hasNext()) {
+            Alocacao u = iterator.next();
+            if (id.equals(u.getId())) {
+                Unidade unidadealoc = u.getUnidade();
 
-                Duration duration = Duration.between(currentTime, alocacoes.get(i).getInicio());
+                Duration duration = Duration.between(u.getInicio(), currentTime);
 
-                valorLucro = (float) (duration.getSeconds() * (unidadealoc.getCustoPorTempo()+ unidadealoc.getCustoPorTempo() * 0.2 ) * (alocacoes.get(i).getCapacidadeComputacional()/2));
-                valorGasto = (duration.getSeconds() * unidadealoc.getCustoPorTempo());
-                unidadealoc.removeItem(alocacoes.get(i).getCapacidadeComputacional());
-                alocacoes.remove(i);
-            };
+                valorLucro = (float) (duration.getSeconds() * (unidadealoc.getCustoPorTempo())) * 2;
+                valorGasto = (float) (duration.getSeconds() * unidadealoc.getCustoPorTempo());
+                unidadealoc.removeItem(u.getCapacidadeComputacional());
+                if (Objects.equals(unidadealoc.getCapacidadeAtual(), unidadealoc.getCapacidadeTotal()))
+                {
+                    unidadealoc.setLigado(false);
+                }
+
+                iterator.remove(); // Remova o elemento usando o iterador
+
+                for (ClienteNuvem clienteObj : clientes) {
+                    if (cliente.equals(clienteObj.getId())) {
+                        clienteObj.removeAlocacao(id);
+                        break;
+                    }
+                }
+                break;
+            }
         }
-        Float[] valores = {valorGasto,valorLucro};
 
-        return valores ;
+        if (valorLucro != null && valorGasto != null) {
+            System.out.println("Valor lucro:" + (valorLucro - valorGasto));
+        }
+        listarAlocacoes();
+        return valorLucro;
     }
+
 
     protected String listaRecursoCliente(Integer cliente){
         String listaRecurso = "Alocacoes:\n";
         ClienteNuvem clienteN = null;
 
-        System.out.println(clientes.size());
         for (int i=0; i<=clientes.size() ;i++){
             if (clientes.get(i).getId().equals(cliente)){
                 clienteN = clientes.get(i) ;
                 break;
             }
-
         }
 
         for (Alocacao u : clienteN != null ? clienteN.getAlocacoes() : null) {
-            listaRecurso +="\n|ID:" + u.getId() + " , Unidade:" + u.getUnidade() + ", Poder:" + u.getCapacidadeComputacional()+ "|";
+            listaRecurso +="\n|ID:" + u.getId() + " , Unidade:" + u.getUnidade().getId() + ", Poder:" + u.getCapacidadeComputacional()+ "|";
 
        }
 
@@ -172,15 +182,18 @@ public class Server {
     };
 
     private void firstfit(Alocacao alocacao){
+        boolean alocado = false;
         boolean execucao = true;
         Integer qtdRecurso = alocacao.getCapacidadeComputacional();
 
-        if (poolDeRecursos.isEmpty()){
-            criarRecursos();
-        }
-
         while (execucao) {
+
+           if (poolDeRecursos.isEmpty() ) {
+               criarRecursos();
+           }
+
             for (Unidade unidade : poolDeRecursos) {
+
                 if(unidade.getLigado() == false){
                     unidade.setLigado(true);
                 }
@@ -189,18 +202,22 @@ public class Server {
                     unidade.addItem(qtdRecurso);
                     alocacao.setUnidade(unidade);
                     alocacoes.add(alocacao);
-                    System.out.println("Recurso alocado na unidade: " + unidade);
+                    System.out.println("Recurso alocado na unidade: " + unidade.getId());
                     execucao = false;
+                    alocado = true;
                 }
             }
-            criarRecursos();
+
+            if (!alocado ) {
+                criarRecursos();
+            }
+
         }
 
     }
 
     private void criarRecursos(){
-        Unidade unidade1 = new Unidade(true, 10.0f, 100, 100, LocalDateTime.now());
-    
+        Unidade unidade1 = new Unidade(random.nextInt(100),true, 10.0f, 100, 100, LocalDateTime.now());
         poolDeRecursos.add(unidade1);
     }
 

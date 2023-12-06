@@ -1,9 +1,10 @@
 package util;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
 
-public class Unidade {
+public class Unidade  implements Serializable {
     Integer id;
     Boolean ligado;
     Float custoPorTempo;
@@ -12,7 +13,8 @@ public class Unidade {
     LocalDateTime tempoInicio;
     LocalDateTime tempoFim;
    
-    public Unidade(Boolean ligado, Float custo, Integer capacidadeTotal, Integer capacidadeAtual, LocalDateTime tempoInicio) {
+    public Unidade(int id,Boolean ligado, Float custo, Integer capacidadeTotal, Integer capacidadeAtual, LocalDateTime tempoInicio) {
+        this.id = id;
         this.ligado = ligado;
         this.custoPorTempo = custo;
         this.capacidadeTotal = capacidadeTotal;
@@ -22,15 +24,20 @@ public class Unidade {
     }
 
     public boolean canFit(Integer size) {
-        return this.capacidadeAtual + size <= this.capacidadeTotal;
+        boolean temCapacidade = false;
+        if ( this.capacidadeAtual - size >= 0) {
+            temCapacidade = true;
+        }
+
+        return temCapacidade;
     }
 
     public void removeItem(Integer size) {
-        this.capacidadeAtual -= size;
+        this.capacidadeAtual += size;
     }
 
     public void addItem(Integer size) {
-        this.capacidadeAtual += size;
+        this.capacidadeAtual -= size;
     }
 
     public int getRemainingSpace() {
@@ -50,6 +57,12 @@ public class Unidade {
             this.tempoFim = LocalDateTime.now();
         }
     }
+
+    public Integer getId() {
+        return id;
+    }
+
+
 
     public LocalDateTime getTempoInicio() {
         return tempoInicio;

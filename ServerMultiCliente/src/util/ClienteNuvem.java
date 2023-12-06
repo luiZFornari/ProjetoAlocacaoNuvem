@@ -2,6 +2,7 @@ package util;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class ClienteNuvem implements Serializable {
     Integer id;
@@ -51,5 +52,13 @@ public class ClienteNuvem implements Serializable {
     public void addAlocacao(Alocacao alocacao){
         this.alocacoes.add(alocacao);
     }
-    
+
+    public void removeAlocacao(Integer id){
+        for (int i=0 ; i<= alocacoes.size() ; i++) {
+            if (id.equals(this.alocacoes.get(i).getId()))
+                this.alocacoes.remove(i);
+        }
+    }
+
+
 }

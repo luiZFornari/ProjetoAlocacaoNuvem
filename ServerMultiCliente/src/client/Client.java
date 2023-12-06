@@ -19,10 +19,6 @@ import util.ClienteNuvem;
 import util.Mensagem;
 import util.Status;
 
-/**
- *
- * @author elder
- */
 public class Client {
 
     /**
@@ -120,6 +116,7 @@ public class Client {
                         scanner.nextLine();
                         msgEnvio = new Mensagem("REMOVER");
                         msgEnvio.setParam("id" , IdRemover);
+                        msgEnvio.setParam("cliente", id);
                         output.writeObject(msgEnvio);
                         output.flush();
                         msgResposta= (Mensagem) input.readObject();
@@ -127,7 +124,6 @@ public class Client {
                         break;
                     case 8:
                         msgEnvio = new Mensagem("LISTARALOCACAO");
-
                         msgEnvio.setParam("cliente", id);
                         output.writeObject(msgEnvio);
                         output.flush();
