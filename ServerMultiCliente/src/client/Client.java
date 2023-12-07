@@ -52,7 +52,7 @@ public class Client {
                 System.out.println("3 - Logout");
                 System.out.println("4 - Nova Alocacao");
                 System.out.println("5 - Remover Alocacao");
-                System.out.println("8 - Listar Alocacoes");
+                System.out.println("6 - Listar Alocacoes");
                 System.out.print("Escolha uma opção: ");
 
                 int escolha = scanner.nextInt();
@@ -122,7 +122,7 @@ public class Client {
                         msgResposta= (Mensagem) input.readObject();
                         System.out.println("Resposta: " + msgResposta);
                         break;
-                    case 8:
+                    case 6:
                         msgEnvio = new Mensagem("LISTARALOCACAO");
                         msgEnvio.setParam("cliente", id);
                         output.writeObject(msgEnvio);

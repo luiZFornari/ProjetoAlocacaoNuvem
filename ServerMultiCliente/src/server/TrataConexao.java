@@ -11,8 +11,7 @@ import java.util.Random;
 import client.Client;
 import util.*;
 
-import static util.Estados.ESPERA;
-import static util.Estados.SAIR;
+import static util.Estados.*;
 
 public class TrataConexao implements Runnable {
 
@@ -121,10 +120,16 @@ public class TrataConexao implements Runnable {
                                         reply.setParam("msg", "Erro: parametros");
                                         break;
                                     }
+                                    if (qtdRecurso > 100)
+                                    {
+                                        reply.setStatus(Status.PARAMERROR);
+                                        reply.setParam("msg","Qtd maior que o permitido");
+                                        break;
+                                    }
 
-                                    Alocacao novaaloc = server.alocaRecurso(qtdRecurso, random.nextInt(100)+ id , cliente);
+                                    Boolean alocou = server.alocaRecurso(qtdRecurso, random.nextInt(100)+ id , cliente);
                                     reply.setStatus(Status.OK);
-                                    reply.setParam("msg",novaaloc.getId());
+                                    reply.setParam("msg","Alocado: "+ alocou);
 
                                 } catch (Exception e) {
                                     m.setStatus(Status.PARAMERROR);
@@ -136,19 +141,25 @@ public class TrataConexao implements Runnable {
                                     Integer alocacao = (Integer) m.getParam("id") ;
                                     Integer cliente = (Integer) m.getParam("cliente") ;
 
-                                    if (alocacao == null ) {
+                                    if (alocacao == null || cliente == null ) {
                                         reply.setStatus(Status.PARAMERROR);
                                         reply.setParam("msg", "Erro: parametros");
                                         break;
                                     }
 
-                                    Float valor = server.desalocaRecurso(alocacao,cliente);
 
+                                    Float valor = server.desalocaRecurso(alocacao,cliente);
+                                    if (valor == null) {
+                                        reply.setStatus(Status.ERROR);
+                                        reply.setParam("msg","Id invalido");
+
+                                    }
+                                    //server.RealocaRecursos();
                                     reply.setStatus(Status.OK);
                                     reply.setParam("msg","Custo : "  + valor);
 
                                 } catch (Exception e) {
-                                    m.setStatus(Status.PARAMERROR);
+                                    m.setStatus(Status.ERROR);
                                     m.setParam("msg","Erro trycatch");
                                 }
                                 break;
@@ -176,6 +187,10 @@ public class TrataConexao implements Runnable {
                                 // DESIGN PATTERN STATE
                                 reply.setStatus(Status.OK);
                                 estado = SAIR;
+                                break;
+                            case "LOGOUT":
+                                reply.setStatus(Status.OK);
+                                estado = CONECTADO;
                                 break;
                             default:
                                 reply.setStatus(Status.ERROR);

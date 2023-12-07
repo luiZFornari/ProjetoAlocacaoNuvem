@@ -37,6 +37,9 @@ public class Server {
     ArrayList<Unidade> poolDeRecursos;
     ArrayList<ClienteNuvem> clientes;
     ArrayList<Alocacao> alocacoes;
+
+    Float valorLucro = 0f;
+    Float valorGasto = 0f;
   
     public Server(){
         usuarios = new ArrayList<>();
@@ -49,6 +52,10 @@ public class Server {
         usuarios.add(new User("Bianca", "159645"));
         usuarios.add(new User("Lucas", "12345"));
         usuarios.add(new User("luiz", "1"));
+
+        for (int i = 0; i < 5; i++) {
+            criarRecursos();
+        }
 
     }
 
@@ -91,7 +98,7 @@ public class Server {
     }
 
 
-    protected Alocacao alocaRecurso( Integer qtdRecurso, Integer id, Integer cliente ){
+    protected Boolean alocaRecurso( Integer qtdRecurso, Integer id, Integer cliente ){
 
         //Algoritmo para decidir onde alocar
         ClienteNuvem clienteN = null;
@@ -103,11 +110,16 @@ public class Server {
             if (clientes.get(i).getId().equals(cliente)){
                 clienteN = clientes.get(i) ;
                 novaAloc = new Alocacao(id,clienteN, null, currentTime, qtdRecurso);
-                clientes.get(i).addAlocacao(novaAloc);
+
                 //algoritmo pra alocar
-                firstfit(novaAloc);
-                listarAlocacoes();
-                return novaAloc;
+                boolean alocou = firstfit(novaAloc);
+                if (alocou) {
+                    clientes.get(i).addAlocacao(novaAloc);
+                    listarAlocacoes();
+                    return true;
+                }else {
+                    return false;
+                }
             }
         }
 
@@ -120,45 +132,45 @@ public class Server {
         }
     }
     protected Float desalocaRecurso(Integer id, Integer cliente){
-        Float valorLucro = null;
-        Float valorGasto = null;
+        Float valorLucroUn = null;
+        Float valorGastoUn = null;
 
         LocalDateTime currentTime = LocalDateTime.now();
 
-        // Utilize um iterador para percorrer a lista e remover elementos
-        Iterator<Alocacao> iterator = alocacoes.iterator();
-        while (iterator.hasNext()) {
-            Alocacao u = iterator.next();
+        for (Alocacao u : alocacoes) {
             if (id.equals(u.getId())) {
                 Unidade unidadealoc = u.getUnidade();
 
                 Duration duration = Duration.between(u.getInicio(), currentTime);
 
-                valorLucro = (float) (duration.getSeconds() * (unidadealoc.getCustoPorTempo())) * 2;
-                valorGasto = (float) (duration.getSeconds() * unidadealoc.getCustoPorTempo());
+                valorLucroUn = (float) (duration.getSeconds() * (unidadealoc.getCustoPorTempo())) * 2;
+                valorGastoUn = (float) (duration.getSeconds() * unidadealoc.getCustoPorTempo());
+
+                valorLucro += valorLucroUn;
+                valorGasto += valorGastoUn;
                 unidadealoc.removeItem(u.getCapacidadeComputacional());
-                if (Objects.equals(unidadealoc.getCapacidadeAtual(), unidadealoc.getCapacidadeTotal()))
+                if (valorLucroUn != null && valorGastoUn != null) {
+                    System.out.println("Valor lucro unidade:" + (valorLucroUn - valorGastoUn));
+                    System.out.println("Valor gasto unidade:" + ( valorGastoUn));
+                    System.out.println("Valor Lucro Global: " + (valorLucro - valorGasto));
+                    System.out.println("Valor Gasto Global: " + (valorGasto));
+                }
+                if (unidadealoc.getCapacidadeAtual().equals( unidadealoc.getCapacidadeTotal()))
                 {
                     unidadealoc.setLigado(false);
                 }
 
-                iterator.remove(); // Remova o elemento usando o iterador
-
                 for (ClienteNuvem clienteObj : clientes) {
                     if (cliente.equals(clienteObj.getId())) {
-                        clienteObj.removeAlocacao(id);
-                        break;
+                       clienteObj.removeAlocacao(id);
                     }
                 }
-                break;
+
+                return valorLucroUn;
             }
         }
 
-        if (valorLucro != null && valorGasto != null) {
-            System.out.println("Valor lucro:" + (valorLucro - valorGasto));
-        }
-        listarAlocacoes();
-        return valorLucro;
+    return  valorLucroUn;
     }
 
 
@@ -181,23 +193,14 @@ public class Server {
         return  listaRecurso;
     };
 
-    private void firstfit(Alocacao alocacao){
+    private Boolean firstfit(Alocacao alocacao){
         boolean alocado = false;
         boolean execucao = true;
         Integer qtdRecurso = alocacao.getCapacidadeComputacional();
 
         while (execucao) {
 
-           if (poolDeRecursos.isEmpty() ) {
-               criarRecursos();
-           }
-
             for (Unidade unidade : poolDeRecursos) {
-
-                if(unidade.getLigado() == false){
-                    unidade.setLigado(true);
-                }
-
                 if (unidade.getLigado() && unidade.canFit(qtdRecurso)) {
                     unidade.addItem(qtdRecurso);
                     alocacao.setUnidade(unidade);
@@ -208,17 +211,42 @@ public class Server {
                 }
             }
 
-            if (!alocado ) {
-                criarRecursos();
+            if (!alocado) {
+                int cont=0;
+                for (Unidade unidade : poolDeRecursos) {
+                    cont ++;
+                    if (!unidade.getLigado()) {
+                        unidade.setLigado(true);
+                        break;
+                    }
+                    if (cont == 5){
+                        execucao = false;
+                    }
+
+                }
             }
 
-        }
 
+        }
+        return alocado;
     }
 
     private void criarRecursos(){
-        Unidade unidade1 = new Unidade(random.nextInt(100),true, 10.0f, 100, 100, LocalDateTime.now());
+        Unidade unidade1 = new Unidade(random.nextInt(100),false, 10.0f, 100, 100, LocalDateTime.now());
         poolDeRecursos.add(unidade1);
+    }
+
+    public  void RealocaRecursos(){
+
+        for (Alocacao aloc : alocacoes) {
+            aloc.setUnidade(null);
+        }
+
+        for (Alocacao aloc : alocacoes) {
+            firstfit(aloc);
+        }
+
+
     }
 
 

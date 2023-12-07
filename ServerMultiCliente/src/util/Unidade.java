@@ -25,7 +25,7 @@ public class Unidade  implements Serializable {
 
     public boolean canFit(Integer size) {
         boolean temCapacidade = false;
-        if ( this.capacidadeAtual - size >= 0) {
+        if ( this.capacidadeAtual - size >= -20) {
             temCapacidade = true;
         }
 
